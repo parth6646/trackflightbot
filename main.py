@@ -24,30 +24,18 @@ def getFlightInfo(flightNum):
 #Figure out how to pick the closest flight if flight is not today
 def rightFlight(filtered_flights):
     currentDate = datetime.now()
-    str_currentDate = currentDate.strftime('%Y-%m-%dT%H:%M:%S.%f')
-    hourmin = 25
-    daymin = 5
+    departure_time = filtered_flights[0]['departure']['scheduled']
+    departure_time = departure_time[0:19]
+    departure_time = datetime.strptime(departure_time, "%Y-%m-%dT%H:%M:%S")
+    min = departure_time
     right_flight = None
-    hour_diff = 0
-    day_diff = 0
-    departure_time = ""
     for flight in filtered_flights:
         departure_time = flight['departure']['scheduled']
-        if departure_time[0:10]==str_currentDate[0:10]:
-            daymin = 0
-            hour_diff = abs(int(departure_time[11:13])-int(str_currentDate[11:13]))
-            if hour_diff < hourmin:
-                min = hour_diff
-                right_flight = flight
-                break
-        elif daymin > 0:
-            day_diff = abs(int(departure_time[8:10]) - int(str_currentDate[8:10]))
-            if day_diff < daymin:
-                daymin = day_diff
-                hour_diff = abs(int(departure_time[11:13]) - int(str_currentDate[11:13]))
-                if hour_diff < hourmin:
-                    hourmin = hour_diff
-                    right_flight = flight
+        departure_time = departure_time[0:19]
+        departure_time = datetime.strptime(departure_time, "%Y-%m-%dT%H:%M:%S")
+        if departure_time <= min:
+            min = departure_time
+            right_flight = flight
     return(right_flight)
 
 
@@ -67,12 +55,9 @@ def output(flights):
     return filtered_flights
 
 def validity(filtered_flights):
-    if not filtered_flights:
-        flight_num_valid = False
-        return flight_num_valid
-    else:
-        flight_num_valid = True
-        return flight_num_valid
+    if len(filtered_flights) > 0:
+        return True
+    return False
 
 def format(right_flight):
     ct = datetime.now()
@@ -86,15 +71,15 @@ def format(right_flight):
     a = right_flight['arrival']['scheduled']
     str = '''\
     Current time: %s
-    Leaving from: %s
-    Terminal: %s
-    Gate: %s
-    Departure: %s
-    Arriving at: %s
-    Terminal: %s
-    Gate: %s
-    Arrival: %s
-    ''' % (ct, lf, t1, g1, d, aa, t2, g2, a)
+Leaving from: %s
+Terminal: %s
+Gate: %s
+Departure: %s
+Arriving at: %s
+Terminal: %s
+Gate: %s
+Arrival: %s
+''' % (ct, lf, t1, g1, d, aa, t2, g2, a)
     return str
 
 
@@ -119,10 +104,6 @@ def responses(m):
         str = format(right_flight)
         bot.reply_to(m, str)
 
-
-
-def handle_responses(m):
-    bot.reply_to(m, responses(m))
 
 @bot.message_handler(func=lambda m: True)
 def handle_any_msg(m):
